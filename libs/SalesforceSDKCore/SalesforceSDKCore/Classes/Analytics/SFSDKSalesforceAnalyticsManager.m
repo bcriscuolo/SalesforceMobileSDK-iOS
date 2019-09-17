@@ -51,6 +51,8 @@ static NSString * const kSFAppFeatureAiltnEnabled = @"AI";
 
 static NSMutableDictionary *analyticsManagerList = nil;
 
+UIBackgroundTaskIdentifier task;
+
 @implementation SFSDKSalesforceAnalyticsManager
 
 + (void)initialize {
@@ -102,8 +104,17 @@ static NSMutableDictionary *analyticsManagerList = nil;
         if (!userAccount) {
             return;
         }
-        NSString *key = SFKeyForUserAndScope(userAccount, SFUserAccountScopeCommunity);
-        [analyticsManagerList removeObjectForKey:key];
+        
+        NSString *userKey = SFKeyForUserAndScope(userAccount, SFUserAccountScopeUser);
+        // Remove all sub-instances (community users) for this user as well
+        NSArray *keys = analyticsManagerList.allKeys;
+        if(userKey) {
+            for( NSString *key in keys) {
+                if([key hasPrefix:userKey]) {
+                    [analyticsManagerList removeObjectForKey:key];
+                }
+            }
+        }
     }
 }
 
@@ -130,10 +141,10 @@ static NSMutableDictionary *analyticsManagerList = nil;
         
         SFEncryptionKey *encKey = [[SFKeyStoreManager sharedInstance] retrieveKeyWithLabel:kEventStoreEncryptionKeyLabel autoCreate:YES];
         DataEncryptorBlock dataEncryptorBlock = ^NSData*(NSData *data) {
-            return [SFSDKCryptoUtils aes256EncryptData:data withKey:encKey.key iv:encKey.initializationVector];
+            return [encKey encryptData:data];
         };
         DataDecryptorBlock dataDecryptorBlock = ^NSData*(NSData *data) {
-            return [SFSDKCryptoUtils aes256DecryptData:data withKey:encKey.key iv:encKey.initializationVector];
+            return [encKey decryptData:data];
         };
         _analyticsManager = [[SFSDKAnalyticsManager alloc] initWithStoreDirectory:rootStoreDir dataEncryptorBlock:dataEncryptorBlock dataDecryptorBlock:dataDecryptorBlock deviceAttributes:deviceAttributes];
         _eventStoreManager = self.analyticsManager.storeManager;
@@ -234,6 +245,7 @@ static NSMutableDictionary *analyticsManagerList = nil;
                 }
                 publishCompleteBlock = nil;
             }
+            [self cleanupBackgroundTask];
         };
         [self applyTransformAndPublish:currentTpp events:events publishCompleteBlock:publishCompleteBlock];
     }
@@ -304,14 +316,11 @@ static NSMutableDictionary *analyticsManagerList = nil;
         return;
     }
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        __block UIBackgroundTaskIdentifier task;
+        __block typeof(self) weakSelf = self;
         task = [[SFApplicationHelper sharedApplication] beginBackgroundTaskWithName:NSStringFromClass([self class]) expirationHandler:^{
-            [[SFApplicationHelper sharedApplication] endBackgroundTask:task];
-            task = UIBackgroundTaskInvalid;
+            [weakSelf cleanupBackgroundTask];
         }];
         [self publishAllEvents];
-        [[SFApplicationHelper sharedApplication] endBackgroundTask:task];
-        task = UIBackgroundTaskInvalid;
     });
 }
 
@@ -342,6 +351,11 @@ static NSMutableDictionary *analyticsManagerList = nil;
     NSUserDefaults *defs = [NSUserDefaults msdkUserDefaults];
     [defs removeObjectForKey:kAnalyticsOnOffKey];
     [[self class] removeSharedInstanceWithUser:user];
+}
+
+- (void) cleanupBackgroundTask {
+    [[SFApplicationHelper sharedApplication] endBackgroundTask:task];
+    task = UIBackgroundTaskInvalid;
 }
 @end
 

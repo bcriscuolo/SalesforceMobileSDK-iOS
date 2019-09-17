@@ -30,6 +30,12 @@
 NS_SWIFT_NAME(AuthHelper)
 @interface SFSDKAuthHelper : NSObject
 
+/**
+ Initiate a login flow if the user is not already logged in to Salesforce and if the app config's `shouldAuthenticate` flag is set to false.
+ 
+ @param completionBlock Block that executes immediately if the user is already logged in, or if the app config's `shouldAuthenticate` is set to false.
+                        Otherwise, this block executes after the user logs in successfully, if login is required.
+ */
 + (void)loginIfRequired:(void (^)(void))completionBlock;
 
 + (void)handleLogout:(void (^)(void))completionBlock;

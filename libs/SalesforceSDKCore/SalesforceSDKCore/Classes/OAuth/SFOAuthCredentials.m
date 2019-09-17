@@ -23,7 +23,8 @@
  */
 
 #import "SFOAuthCredentials+Internal.h"
-
+#import "SFSDKOAuth2+Internal.h"
+#import "SFSDKOAuthConstants.h"
 static NSString * const kSFOAuthArchiveVersion         = @"1.0.3"; // internal version included when archiving via encodeWithCoder
 
 static NSString * const kSFOAuthAccessGroup            = @"com.salesforce.oauth";
@@ -43,13 +44,6 @@ NSException * SFOAuthInvalidIdentifierException() {
                                     userInfo:nil];
 }
 
-@interface SFOAuthCredentials () 
-
-//This property is intentionally readonly in the public header files.
-@property (nonatomic, readwrite, strong) NSString *protocol;
-
-@end
-
 @implementation SFOAuthCredentials
 
 @synthesize identifier                = _identifier;
@@ -63,7 +57,6 @@ NSException * SFOAuthInvalidIdentifierException() {
 @synthesize issuedAt                  = _issuedAt;
 @synthesize protocol                  = _protocol;
 @synthesize encrypted                 = _encrypted;
-@synthesize legacyIdentityInformation = _legacyIdentityInformation;
 @synthesize additionalOAuthFields     = _additionalOAuthFields;
 @synthesize jwt                       = _jwt;
 
@@ -106,7 +99,6 @@ NSException * SFOAuthInvalidIdentifierException() {
             _encrypted = (encryptedBool
                           ? [encryptedBool boolValue]
                           : [coder decodeBoolForKey:@"SFOAuthEncrypted"]);
-            _legacyIdentityInformation = [coder decodeObjectOfClass:[NSDictionary class] forKey:@"SFOAuthIdentityInformation"];
             
             if ([self isMemberOfClass:[SFOAuthCredentials class]]) {
                 self.refreshToken = [coder decodeObjectOfClass:[NSString class] forKey:@"SFOAuthRefreshToken"];
@@ -192,7 +184,6 @@ NSException * SFOAuthInvalidIdentifierException() {
     copyCreds.organizationId = self.organizationId;
     copyCreds.userId = self.userId;
     
-    copyCreds.legacyIdentityInformation = [self.legacyIdentityInformation copy];
     copyCreds.additionalOAuthFields = [self.additionalOAuthFields copy];
     
     return copyCreds;
@@ -320,6 +311,54 @@ NSException * SFOAuthInvalidIdentifierException() {
 
 - (BOOL)hasPropertyValueChangedForKey:(NSString *) key {
     return [_credentialsChangeSet objectForKey:key]!=nil;
+}
+
+- (NSURL *)overrideDomainIfNeeded{
+    
+    NSString *refreshDomain = self.communityId ? self.communityUrl.absoluteString : self.domain;
+    NSString *protocolHost = self.communityId? refreshDomain : [NSString stringWithFormat:@"%@://%@", self.protocol, refreshDomain];
+    return [NSURL URLWithString:protocolHost];
+}
+
+/** Update the credentials using the provided oauth parameters.
+ This method only update the following parameters:
+ - identityUrl
+ - accessToken
+ - instanceUrl
+ - issuedAt
+ - communityId
+ - communityUrl
+ */
+- (void)updateCredentials:(NSDictionary *) params {
+    
+    if (params[kSFOAuthAccessToken]) {
+        [self setPropertyForKey:@"accessToken" withValue:params[kSFOAuthAccessToken]];
+    }
+    
+    if (params[kSFOAuthIssuedAt]) {
+        self.issuedAt = [SFSDKOAuth2 timestampStringToDate:params[kSFOAuthIssuedAt]];
+    }
+    
+    if (params[kSFOAuthInstanceUrl]) {
+        [self setPropertyForKey:@"instanceUrl" withValue:[NSURL URLWithString:params[kSFOAuthInstanceUrl]]];
+    }
+    
+    if (params[kSFOAuthId]) {
+        [self setPropertyForKey:@"identityUrl" withValue:[NSURL URLWithString:params[kSFOAuthId]]];
+    }
+    
+    if (params[kSFOAuthCommunityId]) {
+        [self setPropertyForKey:@"communityId" withValue:params[kSFOAuthCommunityId]];
+    }
+    
+    if (params[kSFOAuthCommunityUrl]) {
+        [self setPropertyForKey:@"communityUrl" withValue:[NSURL URLWithString:params[kSFOAuthCommunityUrl]]];
+    }
+    
+    if (params[kSFOAuthRefreshToken]) {
+        [self setPropertyForKey:@"refreshToken" withValue:params[kSFOAuthRefreshToken]];
+    }
+    
 }
 
 

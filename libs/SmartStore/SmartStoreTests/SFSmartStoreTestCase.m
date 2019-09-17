@@ -28,6 +28,14 @@
 #import "SFSmartStore+Internal.h"
 #import "FMDatabaseQueue.h"
 #import "FMDatabase.h"
+@interface SFOAuthCredentials ()
+@property (nonatomic, readwrite, nullable) NSURL *identityUrl;
+
+@end
+
+@interface SFUserAccountManager()
+- (void)setCurrentUserInternal:(SFUserAccount *)userAccount;
+@end
 
 @implementation SFSmartStoreTestCase
 
@@ -348,7 +356,7 @@
     NSError *error = nil;
     [[SFUserAccountManager sharedInstance] saveAccountForUser:user error:&error];
     XCTAssertNil(error);
-    [SFUserAccountManager sharedInstance].currentUser = user;
+    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:user];
     
     return user;
 }
@@ -356,7 +364,7 @@
 - (void)tearDownSmartStoreUser:(SFUserAccount*)user
 {
     [[SFUserAccountManager sharedInstance] deleteAccountForUser:user error:nil];
-    [SFUserAccountManager sharedInstance].currentUser = nil;
+    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:nil];
 }
 
 

@@ -2,9 +2,9 @@
  SalesforceSDKCore.h
  SalesforceSDKCore
 
- Created by Wolfgang Mathurin on Tue Nov 20 13:29:21 PST 2018.
+ Created by Raj Rao on Thu Jul 25 08:08:04 PDT 2019.
 
- Copyright (c) 2018-present, salesforce.com, inc. All rights reserved.
+ Copyright (c) 2019-present, salesforce.com, inc. All rights reserved.
  
  Redistribution and use of this software in source and binary forms, with or without modification,
  are permitted provided that the following conditions are met:
@@ -45,12 +45,14 @@
 #import <SalesforceSDKCore/SFSecurityLockout.h>
 #import <SalesforceSDKCore/SFSDKDevInfoViewController.h>
 #import <SalesforceSDKCore/SFSDKUserSelectionNavViewController.h>
+#import <SalesforceSDKCore/SFSDKInstrumentationHelper.h>
 #import <SalesforceSDKCore/SFSDKAsyncProcessListener.h>
 #import <SalesforceSDKCore/SFSDKTestRequestListener.h>
 #import <SalesforceSDKCore/UIColor+SFColors.h>
 #import <SalesforceSDKCore/SFSDKLoginHostDelegate.h>
 #import <SalesforceSDKCore/SFPasscodeProviderManager.h>
 #import <SalesforceSDKCore/SFOAuthCoordinator.h>
+#import <SalesforceSDKCore/SFSDKOAuth2.h>
 #import <SalesforceSDKCore/SFKeyStoreManager.h>
 #import <SalesforceSDKCore/SFKeychainItemWrapper.h>
 #import <SalesforceSDKCore/SFOAuthOrgAuthConfiguration.h>
@@ -73,6 +75,7 @@
 #import <SalesforceSDKCore/SFSDKAuthViewHandler.h>
 #import <SalesforceSDKCore/SFApplicationHelper.h>
 #import <SalesforceSDKCore/SFDefaultUserManagementViewController.h>
+#import <SalesforceSDKCore/SFSecureEncryptionKey.h>
 #import <SalesforceSDKCore/SFSDKUserSelectionTableViewController.h>
 #import <SalesforceSDKCore/SFSDKNavigationController.h>
 #import <SalesforceSDKCore/SFSDKLoginHostStorage.h>

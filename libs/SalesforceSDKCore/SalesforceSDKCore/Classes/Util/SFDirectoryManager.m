@@ -29,7 +29,7 @@
 #import <SalesforceSDKCommon/SFSDKDatasharingHelper.h>
 
 static NSString * const kDefaultOrgName = @"org";
-static NSString * const kDefaultCommunityName = @"internal";
+NSString * const kDefaultCommunityName = @"internal";
 static NSString * const kSharedLibraryLocation = @"Library";
 static NSString * const kFilesSharedKey = @"filesShared";
 
@@ -135,7 +135,7 @@ static NSString * const kFilesSharedKey = @"filesShared";
                 return nil;
             }
             // Note: if the user communityId is nil, we use the default (internal) name for it.
-            return [self directoryForOrg:user.credentials.organizationId user:user.credentials.userId community:user.communityId?:kDefaultCommunityName type:type components:components];
+            return [self directoryForOrg:user.credentials.organizationId user:user.credentials.userId community:user.credentials.communityId?:kDefaultCommunityName type:type components:components];
     }
 }
 
@@ -146,7 +146,7 @@ static NSString * const kFilesSharedKey = @"filesShared";
             return nil;
         }
         // Note: if the user communityId is nil, we use the default (internal) name for it.
-        return [self directoryForOrg:user.credentials.organizationId user:user.credentials.userId community:user.communityId?:kDefaultCommunityName type:type components:components];
+        return [self directoryForOrg:user.credentials.organizationId user:user.credentials.userId community:user.credentials.communityId?:kDefaultCommunityName type:type components:components];
     } else {
         return [self globalDirectoryOfType:type components:components];
     }

@@ -37,6 +37,11 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  Callback block definition for OAuth completion callback.
  */
+typedef id<SFSDKOAuthProtocol> __nonnull (^SFAuthClientFactoryBlock)(void);
+
+/**
+ Callback block definition for OAuth completion callback.
+ */
 typedef void (^SFUserAccountManagerSuccessCallbackBlock)(SFOAuthInfo *, SFUserAccount *) NS_SWIFT_NAME(AccountManagerSuccessCallbackBlock);
 
 /**
@@ -75,6 +80,10 @@ FOUNDATION_EXTERN NSNotificationName kSFNotificationUserDidSwitch NS_SWIFT_NAME(
 /** Notification sent when all users of org have logged off. In swift access this constant using Notification.Name.SFUserAccountManagerDidLogoutOrg
  */
 FOUNDATION_EXTERN NSNotificationName kSFNotificationOrgDidLogout NS_SWIFT_NAME(UserAccountManager.didLogoutOrg);
+
+/** Notification sent when a oauth refresh flow succeeds.
+ */
+FOUNDATION_EXTERN NSNotificationName kSFNotificationUserDidRefreshToken  NS_SWIFT_NAME(UserAccountManager.didRefreshToken);
 
 /** Notification sent prior to display of Auth View. In swift access this constant using Notification.Name.SFUserAccountManagerWillShowAuthenticationView
  */
@@ -306,6 +315,8 @@ NS_SWIFT_NAME(UserAccountManager)
  */
 @property (nonatomic, copy) NSSet<NSString*> *scopes;
 
+@property (nonatomic, copy, nullable) SFAuthClientFactoryBlock authClient;
+
 /**  Convenience property to retrieve the current user's identity.
  */
 @property (readonly, nonatomic, nullable) SFUserAccountIdentity *currentUserIdentity  NS_SWIFT_NAME(currentUserAccountIdentity);
@@ -492,7 +503,13 @@ NS_SWIFT_NAME(UserAccountManager)
 /**
  Switches away from the current user, to a new user context.
  */
-- (void)switchToNewUser NS_SWIFT_NAME(switchToNewUserAccount());
+- (void)switchToNewUser NS_SWIFT_NAME(switchToNewUserAccount()) SFSDK_DEPRECATED(7.2, 8.0, "Use switchToNewUserWithCompletion instead.");
+
+/**
+ Switches to a new user. Sets the current user only if the login succeeds. Completion block is
+ invoked if the login flow completes, or if any errors are encountered during the flow.
+ */
+- (void)switchToNewUserWithCompletion:(void (^)(NSError *, SFUserAccount *))completion NS_SWIFT_NAME(switchToNewUserAccount(_:));
 
 /**
  Switches away from the current user, to the given user account.
@@ -615,6 +632,8 @@ NS_SWIFT_NAME(UserAccountManager)
  @return SFBiometricUnlockState UserAllowed, UserDeclined, PromptUser or Unavalible.  
  */
 - (SFBiometricUnlockState)biometricUnlockState;
+
+- (void)setCurrentUser:(SFUserAccount * _Nullable)currentUser SFSDK_DEPRECATED(7.2, 8.0, "Use switchToUser or  switchToNewUserWithCompletion instead.");
 
 @end
 

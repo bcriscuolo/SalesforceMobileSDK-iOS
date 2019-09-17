@@ -39,6 +39,17 @@ typedef NS_ENUM(NSInteger, SFRestMethod) {
 } NS_SWIFT_NAME(RestRequest.Method);
 
 /**
+ * HTTP methods for requests.
+ */
+typedef NS_ENUM(NSInteger, SFSDKNetworkServiceType) {
+    SFNetworkServiceTypeDefault,
+    SFNetworkServiceTypeResponsiveData,
+    SFNetworkServiceTypeBackground,
+   
+} NS_SWIFT_NAME(RestRequest.NetWorkServiceType);
+
+
+/**
  * The type of service host to use for Rest requests.
  */
 typedef NS_ENUM(NSUInteger, SFSDKRestServiceHostType) {
@@ -51,7 +62,12 @@ typedef NS_ENUM(NSUInteger, SFSDKRestServiceHostType) {
     /**
      *  Request uses the instance endpoint.
      */
-    SFSDKRestServiceHostTypeInstance
+    SFSDKRestServiceHostTypeInstance,
+    
+    /**
+     *  Request uses a custom endpoint.
+     */
+    SFSDKRestServiceHostTypeCustom
 } NS_SWIFT_NAME(RestRequest.ServiceHostType);
 
 NS_ASSUME_NONNULL_BEGIN
@@ -143,6 +159,11 @@ NS_SWIFT_NAME(RestRequest)
 @property (nonatomic, assign, readwrite) SFRestMethod method;
 
 /**
+ * The HTTP method of the request. See SFRestMethod.
+ */
+@property (nonatomic, assign, readwrite) SFSDKNetworkServiceType networkServiceType;
+
+/**
  * The type of service host for the request (e.g. login or instance).
  */
 @property (nonatomic, assign, readwrite) SFSDKRestServiceHostType serviceHostType;
@@ -229,6 +250,16 @@ NS_SWIFT_NAME(RestRequest)
 - (void)cancel;
 
 /**
+ * Add file to upload
+ * @param fileData Value of this POST parameter
+ * @param paramName Name of the POST parameter
+ * @param fileName Name of the file
+ * @param mimeType MIME type of the file
+ * @param params File properties (e.g. title, desc, contentSize)
+ */
+- (void)addPostFileData:(NSData *)fileData paramName:(NSString *)paramName fileName:(NSString *)fileName mimeType:(NSString *)mimeType params:(nullable NSDictionary *)params;
+
+/**
  * Add file to upload.
  * @param fileData Value of this POST parameter
  * @param paramName Name of the POST parameter
@@ -236,7 +267,7 @@ NS_SWIFT_NAME(RestRequest)
  * @param fileName Name of the file
  * @param mimeType MIME type of the file
  */
-- (void)addPostFileData:(NSData *)fileData paramName:(NSString*)paramName description:(nullable NSString *)description fileName:(NSString *)fileName mimeType:(NSString *)mimeType;
+- (void)addPostFileData:(NSData *)fileData paramName:(NSString*)paramName description:(nullable NSString *)description fileName:(NSString *)fileName mimeType:(NSString *)mimeType SFSDK_DEPRECATED(7.2, 8.0, "Use addPostFileData:paramName:fileName:mimeType:params instead");
 
 /**
  * Sets a custom request body based on an NSString representation.
@@ -304,13 +335,33 @@ NS_SWIFT_NAME(RestRequest)
 + (instancetype)requestWithMethod:(SFRestMethod)method serviceHostType:(SFSDKRestServiceHostType)hostType path:(NSString *)path queryParams:(nullable NSDictionary<NSString*, id> *)queryParams;
 
 /**
- * Creates an `SFRestRequest` object. See SFRestMethod. If you need to set body on the request, use one of the 'setCustomRequestBody...' methods to do so with the instance returned by this method.
+ * Creates an `SFRestRequest` object. To set the body of the request, use one of the `setCustomRequestBody...` methods on the returned instance.
+ * @param method HTTP method
+ * @param baseURL Request URL
+ * @param path Request path
+ * @param queryParams Parameters of the request (can be nil)
+ * @see SFRestMethod. 
+ */
++ (instancetype)requestWithMethod:(SFRestMethod)method baseURL:(NSString *)baseURL path:(NSString *)path queryParams:(nullable NSDictionary<NSString*, id> *)queryParams;
+
+/**
+ * Creates an `SFRestRequest` object to be used with non-Salesforce endpoints. To set body on the request, use one of the 'setCustomRequestBody...' methods on the returned instance.
  * @param method the HTTP method
  * @param baseURL the request URL
  * @param path the request path
  * @param queryParams the parameters of the request (could be nil)
+ * @see SFRestMethod. 
  */
-+ (instancetype)requestWithMethod:(SFRestMethod)method baseURL:(NSString *)baseURL path:(NSString *)path queryParams:(nullable NSDictionary<NSString*, id> *)queryParams;
++ (instancetype)customUrlRequestWithMethod:(SFRestMethod)method baseURL:(NSString *)baseURL path:(NSString *)path queryParams:(nullable NSDictionary<NSString*, id> *)queryParams;
+
+/**
+ * Creates an `SFRestRequest` object to be used with custom Salesforce endpoints. See SFRestMethod. If you need to set body on the request, use one of the 'setCustomRequestBody...' methods to do so with the instance returned by this method.
+ * @param method the HTTP method
+ * @param path the request path
+ * @param queryParams the parameters of the request (could be nil)
+ */
+
++ (instancetype)customEndPointRequestWithMethod:(SFRestMethod)method endPoint:(NSString *)endPoint path:(NSString *)path queryParams:(nullable NSDictionary<NSString*, id> *)queryParams;
 
 @end
 

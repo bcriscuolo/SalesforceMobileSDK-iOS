@@ -128,7 +128,7 @@ NS_SWIFT_NAME(SalesforceManager)
  *
  * @return App name.
  */
-@property (class,nonatomic)NSString *ailtnAppName NS_SWIFT_NAME(analyticsAppName);
+@property (class,nonatomic,strong)NSString *ailtnAppName NS_SWIFT_NAME(analyticsAppName);
 
 
 /**
@@ -216,7 +216,7 @@ NS_SWIFT_NAME(SalesforceManager)
  @discussion
  This block is only invoked if the dismissal action is also set.
  */
-@property (nonatomic, copy, nullable) SFSnapshotViewControllerPresentationBlock snapshotPresentationAction NS_SWIFT_NAME(snapshotViewCreationHandler);
+@property (nonatomic, copy, nullable) SFSnapshotViewControllerPresentationBlock snapshotPresentationAction NS_SWIFT_NAME(snapshotViewPresentationHandler);
 
 /**
  The block to execute to dismiss the snapshot viewcontroller.
@@ -249,15 +249,20 @@ NS_SWIFT_NAME(SalesforceManager)
  */
 @property (nonatomic, copy) NSString *idpAppURIScheme NS_SWIFT_NAME(identityProviderURLScheme);
 
-/** Use this flag to setup a user friendly display name  for your current app. This value will be used by the identity
- *  provider app on the user selection view.
+/**
+ A user friendly display name for use in UI by the SDK on behalf of the app.  This value will be used on various authentication screens
+ such as biometric enrollment or IDP login. If left unset, this property will fallback to CFBundleDisplayName or CFBundleName depending on what is available.
  */
-@property (nonatomic,copy) NSString *appDisplayName;
+@property (nonatomic,copy) NSString *appDisplayName NS_SWIFT_NAME(appDisplayName);
 
 
 /** Use this flag to indicate if the dev support dialog should be enabled in the APP
  */
 @property (nonatomic, assign) BOOL isDevSupportEnabled;
+
+/** Use this flag to indicate if the URL cache should be encrypted. YES by default.
+ */
+@property (nonatomic, assign) BOOL encryptURLCache;
 
 /**
  Launches the SDK.  This will verify an existing passcode the first time it runs, and attempt to

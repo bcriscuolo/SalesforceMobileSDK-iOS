@@ -94,16 +94,32 @@
     XCTAssertTrue([options containsObject:@"ENABLE_JSON1"]);
 }
 
+/**
+ * Test to check runtime settings
+ */
+- (void) testRuntimeSettings
+{
+    NSArray* settings = [self.store getRuntimeSettings];
+    
+    // Make sure run time settings are 4.x settings except for kdf_iter
+    XCTAssertTrue([settings containsObject:@"PRAGMA kdf_iter = 4000;"]);
+    XCTAssertTrue([settings containsObject:@"PRAGMA cipher_page_size = 4096;"]);
+    XCTAssertTrue([settings containsObject:@"PRAGMA cipher_use_hmac = 1;"]);
+    XCTAssertTrue([settings containsObject:@"PRAGMA cipher_plaintext_header_size = 0;"]);
+    XCTAssertTrue([settings containsObject:@"PRAGMA cipher_hmac_algorithm = HMAC_SHA512;"]);
+    XCTAssertTrue([settings containsObject:@"PRAGMA cipher_kdf_algorithm = PBKDF2_HMAC_SHA512;"]);
+}
+
 - (void) testSqliteVersion
 {
     NSString* version = [NSString stringWithUTF8String:sqlite3_libversion()];
-    XCTAssertEqualObjects(version, @"3.20.1");
+    XCTAssertEqualObjects(version, @"3.28.0");
 }
 
 - (void) testSqlCipherVersion
 {
     NSString* version = [self.store getSQLCipherVersion];
-    XCTAssertEqualObjects(version, @"3.4.2");
+    XCTAssertEqualObjects(version, @"4.2.0 community");
 }
 
 /**
@@ -939,6 +955,52 @@
     }
 }
 
+- (void)testSmartStoreIsRecreatedWhenKeyIsLost {
+    NSString* storeName = @"testSmartStoreIsRecreatedWhenKeyIsLost";
+    SFEncryptionKey *originalKey = [[SFKeyStoreManager sharedInstance] retrieveKeyWithLabel:kSFSmartStoreEncryptionKeyLabel autoCreate:YES];
+
+    @try {
+        // Create store
+        SFSmartStore* store = [SFSmartStore sharedStoreWithName:storeName];
+        XCTAssertNotNil(store, @"New store should have been created");
+        
+        // Create soup in store
+        [self registerTestSoup:store indexType:kSoupIndexTypeString];
+        
+        // Close store
+        [store.storeQueue close];
+        
+        // Clear store map
+        [SFSmartStore clearSharedStoreMemoryState];
+        
+        // Re-open store
+        store = [SFSmartStore sharedStoreWithName:storeName];
+        XCTAssertNotNil(store, @"Existing store should have been found");
+        XCTAssertTrue([store soupExists:kTestSoupName], @"Soup should still exist");
+        
+        // Close store
+        [store.storeQueue close];
+        
+        // Clear store map
+        [SFSmartStore clearSharedStoreMemoryState];
+        
+        // Drop key
+        [[SFKeyStoreManager sharedInstance] removeKeyWithLabel:kSFSmartStoreEncryptionKeyLabel];
+        
+        // Re-open store -- but expect new empty store since key has changed
+        store = [SFSmartStore sharedStoreWithName:storeName];
+        XCTAssertNotNil(store, @"A store should have been returned");
+        XCTAssertFalse([store soupExists:kTestSoupName], @"Soup should no longer exist");
+
+    }
+    @finally {
+        // Drop store
+        [SFSmartStore removeSharedStoreWithName:storeName];
+        // Restore key
+        [[SFKeyStoreManager sharedInstance] storeKey:originalKey withLabel:kSFSmartStoreEncryptionKeyLabel];
+    }
+}
+
 - (void)testOpenDatabase
 {
     for (SFSmartStoreDatabaseManager *dbMgr in @[ [SFSmartStoreDatabaseManager sharedManager], [SFSmartStoreDatabaseManager sharedGlobalManager] ]) {
@@ -982,7 +1044,7 @@
         // Encrypt the DB, verify access.
         NSString *encKey = @"BigSecret";
         NSError *encryptError = nil;
-        FMDatabase *encryptedDb = [dbMgr encryptDb:unencryptedDb name:storeName key:encKey error:&encryptError];
+        FMDatabase *encryptedDb = [dbMgr encryptDb:unencryptedDb name:storeName key:encKey salt:nil error:&encryptError];
         XCTAssertNotNil(encryptedDb, @"Encrypted DB should be a valid object.");
         XCTAssertNil(encryptError, @"Error encrypting the DB: %@", [encryptError localizedDescription]);
         isTableNameInMaster = [self tableNameInMaster:tableName db:encryptedDb];
@@ -1035,6 +1097,7 @@
         FMDatabase *unencryptedDb2 = [dbMgr unencryptDb:encryptedDb2
                                                    name:storeName
                                                  oldKey:encKey
+                                                   salt:nil
                                                   error:&unencryptError];
         XCTAssertNil(unencryptError, @"Error unencrypting the database: %@", [unencryptError localizedDescription]);
         isTableNameInMaster = [self tableNameInMaster:tableName db:unencryptedDb2];
@@ -1225,7 +1288,7 @@
     // Unencrypted store
     FMDatabase *storeDb = [self openDatabase:unencryptedStoreName withManager:[SFSmartStoreDatabaseManager sharedManager] key:encKey openShouldFail:NO];
     NSError *unencryptStoreError = nil;
-    storeDb = [[SFSmartStoreDatabaseManager sharedManager] unencryptDb:storeDb name:unencryptedStoreName oldKey:encKey error:&unencryptStoreError];
+    storeDb = [[SFSmartStoreDatabaseManager sharedManager] unencryptDb:storeDb name:unencryptedStoreName oldKey:encKey salt:nil error:&unencryptStoreError];
     XCTAssertNotNil(storeDb, @"Failed to unencrypt '%@': %@", unencryptedStoreName, [unencryptStoreError localizedDescription]);
     [storeDb close];
     [SFSmartStoreUpgrade setUsesKeyStoreEncryption:NO forUser:[SFUserAccountManager sharedInstance].currentUser store:unencryptedStoreName];
@@ -1307,6 +1370,27 @@
     }
 }
 
+- (void)testReadMultiByteCharacterAroundBufferBoundary {
+    // This test ensures that a string containing a multi-byte character is properly read back
+    // when that character is located at the buffer boundary.
+    NSMutableString *text = [NSMutableString string];
+    // Fill the string up to one byte before the buffer ends
+    for (NSUInteger index = 0; index < kBufferSize - 1; index++) {
+        [text appendString:@"A"];
+    }
+    // Let's use the character 𝄞 which uses 4 bytes (internally stored as UTF-16 surrogate pair)
+    // and will span the buffer boundary
+    [text appendString:@"𝄞"];
+    // Add a few more character after the buffer boundary
+    for (NSUInteger index = 0; index < 125; index++) {
+        [text appendString:@"B"];
+    }
+    NSInputStream *is = [NSInputStream inputStreamWithData:[text dataUsingEncoding:NSUTF8StringEncoding]];
+    
+    NSString *outputText = [SFSmartStore stringFromInputStream:is];
+    XCTAssertEqualObjects(text, outputText);
+}
+
 #pragma mark - helper methods
 
 - (SFSmartStore *)smartStoreForManager:(SFSmartStoreDatabaseManager *)dbMgr withName:(NSString *)storeName
@@ -1336,7 +1420,7 @@
 - (FMDatabase *)openDatabase:(NSString *)dbName withManager:(SFSmartStoreDatabaseManager *)dbMgr key:(NSString *)key openShouldFail:(BOOL)openShouldFail
 {
     NSError *openDbError = nil;
-    FMDatabase *db = [dbMgr openStoreDatabaseWithName:dbName key:key error:&openDbError];
+    FMDatabase *db = [dbMgr openStoreDatabaseWithName:dbName key:key salt:nil error:&openDbError];
     if (openShouldFail) {
         XCTAssertNil(db, @"Opening database should have failed.");
     } else {
@@ -1407,6 +1491,17 @@
     XCTAssertEqual(allStoreCount, (NSUInteger)0, @"Should not be any stores after removing them all.");
 }
 
+- (void) registerTestSoup:(SFSmartStore*)store indexType:(NSString*)indexType {
+    SFSoupSpec *soupSpec = [SFSoupSpec newSoupSpec:kTestSoupName withFeatures:nil];
+    [self registerTestSoup:store indexType:indexType soupSpec:soupSpec];
+}
+
+- (void) registerTestSoup:(SFSmartStore*)store indexType:(NSString*)indexType soupSpec:(SFSoupSpec*)soupSpec {
+    NSError* error = nil;
+    [store registerSoupWithSpec:soupSpec withIndexSpecs:[SFSoupIndex asArraySoupIndexes:@[@{@"path": @"key",@"type":indexType}, @{@"path": @"value",@"type":kSoupIndexTypeString}]] error:&error];
+    XCTAssertNil(error, @"Soup should have registered without error");
+    XCTAssertTrue([store soupExists:kTestSoupName], @"Soup should exist after registration");
+}
 
 
 @end

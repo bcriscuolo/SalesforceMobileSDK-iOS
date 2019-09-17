@@ -28,7 +28,7 @@
  */
 #import "SFSDKUITableViewCell.h"
 #import "SFSDKUserSelectionTableViewController.h"
-#import "UIColor+SFSDKIDP.m"
+#import "UIColor+SFSDKIDP.h"
 #import "UIFont+SFSDKIDP.h"
 #import "SFSDKResourceUtils.h"
 static CGFloat kHorizontalSpace = 12;
@@ -63,7 +63,7 @@ static CGFloat kImageHeight = 60;
     self.detailLabel = [[UILabel alloc] init];
     self.titleLabel.font = [UIFont textRegular:16.0];
     self.titleLabel.textColor = [UIColor defaultTextColor];
-    self.detailLabel.font = [UIFont textRegular:14.0];;
+    self.detailLabel.font = [UIFont textRegular:14.0];
     self.detailLabel.textColor = [UIColor weakTextColor];
     self.profileImageView.translatesAutoresizingMaskIntoConstraints = NO;
     self.titleLabel.translatesAutoresizingMaskIntoConstraints = NO;

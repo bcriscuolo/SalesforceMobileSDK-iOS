@@ -29,8 +29,8 @@
 #import "SFUserAccount.h"
 #import "SFSDKTestRequestListener.h"
 #import "SFSDKTestCredentialsData.h"
-
-
+#import "SFOAuthCredentials+Internal.h"
+#import "SFSDKAppConfig.h"
 static SFOAuthCredentials *credentials = nil;
 
 @implementation TestSetupUtils
@@ -64,10 +64,17 @@ static SFOAuthCredentials *credentials = nil;
               nil != credsData.instanceUrl, @"config credentials are missing! %@",
               dictResponse);
 
-    //check whether the test config file has never been edited
+    // check whether the test config file has never been edited
     NSAssert(![credsData.refreshToken isEqualToString:@"__INSERT_TOKEN_HERE__"],
              @"You need to obtain credentials for your test org and replace test_credentials.json");
-    [SFUserAccountManager sharedInstance].currentUser = nil;
+    [SalesforceSDKManager initializeSDK];
+
+    // Note: We need to fix this inconsistency for tests in the long run.There should be a clean way to refresh appConfigs for tests. The configs should apply across all components that need the  config.
+    SFSDKAppConfig *appconfig  = [[SFSDKAppConfig alloc] init];
+    appconfig.oauthRedirectURI = credsData.redirectUri;
+    appconfig.remoteAccessConsumerKey = credsData.clientId;
+    appconfig.oauthScopes = [NSSet setWithObjects:@"web", @"api", @"openid", nil];
+    [SalesforceSDKManager sharedManager].appConfig = appconfig;
     [SFUserAccountManager sharedInstance].oauthClientId = credsData.clientId;
     [SFUserAccountManager sharedInstance].oauthCompletionUrl = credsData.redirectUri;
     [SFUserAccountManager sharedInstance].scopes = [NSSet setWithObjects:@"web", @"api", nil];
@@ -101,8 +108,7 @@ static SFOAuthCredentials *credentials = nil;
          authListener.returnStatus = kTestRequestStatusDidFail;
      }];
     [authListener waitForCompletion];
-    [[SFUserAccountManager sharedInstance] setCurrentUser:user];
-    
+    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:user];
     NSAssert([authListener.returnStatus isEqualToString:kTestRequestStatusDidLoad], @"After auth attempt, expected status '%@', got '%@'",
              kTestRequestStatusDidLoad,
              authListener.returnStatus);

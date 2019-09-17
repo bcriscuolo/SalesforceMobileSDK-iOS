@@ -40,6 +40,7 @@
 #import "SFSDKAlertMessage.h"
 #import "SFSDKAlertMessageBuilder.h"
 #import "SFSDKStartURLHandler.h"
+#import "SFOAuthCredentials+Internal.h"
 @implementation SFUserAccountManager (URLHandlers)
 
 - (BOOL)handleNativeAuthResponse:(NSURL *_Nonnull)appUrlResponse options:(NSDictionary *_Nullable)options {
@@ -139,6 +140,7 @@
         UIViewController<SFSDKUserSelectionView> *controller  = authClient.idpUserSelectionBlock();
         controller.spAppOptions = request.allParams;
         controller.userSelectionDelegate = self;
+        controller.modalPresentationStyle = UIModalPresentationFullScreen;
         [authClient.authWindow presentWindowAnimated:NO withCompletion:^{
             [authClient.authWindow.viewController presentViewController:controller animated:NO  completion:nil];
         }];

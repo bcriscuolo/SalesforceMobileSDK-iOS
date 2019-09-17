@@ -32,20 +32,18 @@ import SalesforceSDKCore
 
 import MobileCoreServices
 
-class AppDelegate : UIResponder, UIApplicationDelegate
-{
+class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
     
-    override
-    init()
-    {
+    override init() {
         
         super.init()
       
         SalesforceManager.initializeSDK()
+        SalesforceManager.shared.appDisplayName = "Rest API Explorer"
         
         //Uncomment following block to enable IDP Login flow.
-        // SalesforceSDK.shared().idpAppURIScheme = "sampleidpapp"
+        //SalesforceManager.shared.identityProviderURLScheme = "sampleidpapp"
         AuthHelper.registerBlock(forCurrentUserChangeNotifications: {
             self.resetViewState {
                 self.initializeAppViewState()
@@ -56,10 +54,9 @@ class AppDelegate : UIResponder, UIApplicationDelegate
     
     // MARK: - App delegate lifecycle
     
-    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool
-    {
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         self.window = UIWindow(frame: UIScreen.main.bounds)
-        self.initializeAppViewState();
+        self.initializeAppViewState()
         
         // If you wish to register for push notifications, uncomment the line below.  Note that,
         // if you want to receive push notifications from Salesforce, you will also need to
@@ -103,26 +100,26 @@ class AppDelegate : UIResponder, UIApplicationDelegate
         return true
     }
     
-    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data)
-    {
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
         //
         // Uncomment the code below to register your device token with the push notification manager
         //
         //
         // SFPushNotificationManager.sharedInstance().didRegisterForRemoteNotifications(withDeviceToken: deviceToken)
-        // if (SFUserAccountManager.shared.currentUserAccount.credentials.accessToken != nil)
-        // {
-        //     SFPushNotificationManager.sharedInstance().registerSalesforceNotifications(completionBlock: nil, fail: nil)
+        // if let _ = UserAccountManager.shared.currentUserAccount?.credentials.accessToken {
+        //     SFPushNotificationManager.sharedInstance().registerSalesforceNotifications(completionBlock: {
+        //         SalesforceLogger.e(AppDelegate.self, message: "Registration for Salesforce notifications succeeded")
+        //     }, fail: {
+        //         SalesforceLogger.e(AppDelegate.self, message: "Registration for Salesforce notifications failed")
+        //     })
         // }
     }
     
-    
-    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error )
-    {
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error ) {
         // Respond to any push notification registration errors here.
     }
     
-    func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
+    func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
         
         // Uncomment following block to enable IDP Login flow
         // return  UserAccountManager.shared.handleIdentityProviderResponse(from: url, with: options)
@@ -130,9 +127,8 @@ class AppDelegate : UIResponder, UIApplicationDelegate
     }
     
     // MARK: - Private methods
-    func initializeAppViewState()
-    {
-        if (!Thread.isMainThread) {
+    func initializeAppViewState() {
+        if !Thread.isMainThread {
             DispatchQueue.main.async {
                 self.initializeAppViewState()
             }
@@ -143,15 +139,13 @@ class AppDelegate : UIResponder, UIApplicationDelegate
         self.window!.makeKeyAndVisible()
     }
     
-    func setupRootViewController()
-    {
+    func setupRootViewController() {
         let rootVC = RootViewController(nibName: nil, bundle: nil)
         let navVC = UINavigationController(rootViewController: rootVC)
         self.window!.rootViewController = navVC
     }
     
-    func resetViewState(_ postResetBlock: @escaping () -> ())
-    {
+    func resetViewState(_ postResetBlock: @escaping () -> Void ) {
         if let rootViewController = self.window!.rootViewController {
             if let _ = rootViewController.presentedViewController {
                 rootViewController.dismiss(animated: false, completion: postResetBlock)
@@ -179,10 +173,9 @@ class AppDelegate : UIResponder, UIApplicationDelegate
         if let community = creds.communityUrl {
             config["community_url"] = community.absoluteString
         }
-        
+    
         let configJSON = SFJsonUtils.jsonRepresentation(config)
         let board = UIPasteboard.general
         board.setValue(configJSON, forPasteboardType: kUTTypeUTF8PlainText as String)
     }
 }
-

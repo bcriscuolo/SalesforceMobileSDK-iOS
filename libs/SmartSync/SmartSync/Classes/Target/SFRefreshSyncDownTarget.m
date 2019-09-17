@@ -151,6 +151,12 @@ static NSUInteger const kSFSyncTargetRefreshDefaultCountIdsPerSoql = 500;
     };
     
     SFSyncDownTargetFetchCompleteBlock fetchBlock = ^(NSArray* records) {
+        NSError* error = nil;
+        if (![syncManager checkAcceptingSyncs:&error]) {
+            errorBlock(error);
+            return;
+        }
+
         // NB with the recursive block, using weakSelf doesn't work (it goes to nil)
         //    are we leaking memory?
 
@@ -260,7 +266,7 @@ static NSUInteger const kSFSyncTargetRefreshDefaultCountIdsPerSoql = 500;
                            : @"");
     NSString* whereClause = [NSString stringWithFormat:@"%@ IN ('%@')%@", self.idFieldName, [ids componentsJoinedByString:@"','"], andClause];
     NSString* soql = [[[[SFSDKSoqlBuilder withFieldsArray:fieldlist] from:self.objectType] whereClause:whereClause] build];
-    SFRestRequest* request = [[SFRestAPI sharedInstance] requestForQuery:soql];
+    SFRestRequest* request = [[SFRestAPI sharedInstance] requestForQuery:soql apiVersion:kSFRestDefaultAPIVersion];
     [SFSmartSyncNetworkUtils sendRequestWithSmartSyncUserAgent:request failBlock:^(NSError *e, NSURLResponse *rawResponse) {
         errorBlock(e);
     } completeBlock:^(NSDictionary *d, NSURLResponse *rawResponse) {

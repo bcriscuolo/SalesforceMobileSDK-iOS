@@ -69,7 +69,10 @@ NS_SWIFT_NAME(SalesforceLoginViewController)
 @property (nonatomic, strong, nullable) UIFont * navBarFont NS_SWIFT_NAME(navigationBarFont);
 
 /** Specify the text color to use for navigation bar header text. */
-@property (nonatomic, strong, nullable) UIColor * navBarTextColor  NS_SWIFT_NAME(navigationBarTextColor);
+@property (nonatomic, strong, nullable) UIColor * navBarTintColor  NS_SWIFT_NAME(navigationBarTintColor);
+
+/** Specify the text color to use for navigation bar header text. */
+@property (nonatomic, strong, nullable) UIColor * navBarTitleColor  NS_SWIFT_NAME(navigationBarTitleColor);
 
 /** Specify navigation bar color. This color will be used by the login view header.
  */
@@ -87,6 +90,9 @@ NS_SWIFT_NAME(SalesforceLoginViewController)
 
 /** Get the instance of nav bar. Use this property to get the instance of navBar*/
 @property (nonatomic, strong, readonly, nullable) UINavigationBar *navBar;
+
+/** Get the refrence  to the SFSDKLoginHostListViewController */
+@property (nonatomic, strong) SFSDKLoginHostListViewController * _Nonnull loginHostListViewController;
 
 /** Applies the view's style attributes to the given navigation bar.
  @param navigationBar The navigation bar that the style is applied to.
@@ -113,6 +119,10 @@ NS_SWIFT_NAME(SalesforceLoginViewController)
 /** Factory Method to create the navigation title.
  */
 - (nonnull UIView *)createTitleItem;
+
+/** Factory Method to create the hostListView Controller.
+ */
+- (nonnull SFSDKLoginHostListViewController *)createLoginHostListViewController;
 
 /** Logic to show back button.
  */

@@ -33,7 +33,7 @@
 #import "SFSDKResourceUtils.h"
 #import "SFManagedPreferences.h"
 #import "SFUserAccountManager.h"
-
+#import "SFSDKViewUtils.h"
 static NSString * const SFDCLoginHostListCellIdentifier = @"SFDCLoginHostListCellIdentifier";
 
 @interface SFSDKLoginHostListViewController () <UINavigationControllerDelegate>
@@ -129,7 +129,7 @@ static NSString * const SFDCLoginHostListCellIdentifier = @"SFDCLoginHostListCel
 
     // Displays the 'Add Server' button only if the MDM policy allows us to.
     SFManagedPreferences *managedPreferences = [SFManagedPreferences sharedPreferences];
-    if (!(managedPreferences.hasManagedPreferences && managedPreferences.onlyShowAuthorizedHosts)) {
+    if (!(managedPreferences.hasManagedPreferences && managedPreferences.onlyShowAuthorizedHosts) && !self.hidesAddButton) {
         self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(showAddLoginHost:)];
     }
     self.title = [SFSDKResourceUtils localizedString:@"LOGIN_CHOOSE_SERVER"];
@@ -138,7 +138,9 @@ static NSString * const SFDCLoginHostListCellIdentifier = @"SFDCLoginHostListCel
                                              style:UIBarButtonItemStylePlain
                                              target:nil
                                              action:nil];
-    self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(cancelLoginPicker:)];
+    if (!self.hidesCancelButton) {
+        self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel target:self action:@selector(cancelLoginPicker:)];
+    }
     
     // Make sure the current login host exists.
     NSUInteger index = [self indexOfCurrentLoginHost];
@@ -170,18 +172,7 @@ static NSString * const SFDCLoginHostListCellIdentifier = @"SFDCLoginHostListCel
 
 - (void)setupBrandingForNavBar {
     [self.navigationController.navigationBar setTranslucent:NO];
-    
-    SFSDKLoginViewControllerConfig *config = [SFUserAccountManager sharedInstance].loginViewControllerConfig;
-    if (config.navBarColor) {
-        [self.navigationController.navigationBar setBarTintColor:config.navBarColor];
-    }
-    if (config.navBarTextColor) {
-        self.navigationController.navigationBar.tintColor = config.navBarTextColor;
-    }
-    
-    if (config.navBarFont && config.navBarTitleColor) {
-        [self.navigationController.navigationBar setTitleTextAttributes:@{NSForegroundColorAttributeName: config.navBarTitleColor, NSFontAttributeName: config.navBarFont}];
-    }
+    [SFSDKViewUtils styleNavigationBar:self.navigationController.navigationBar config:[SFUserAccountManager sharedInstance].loginViewControllerConfig];
 }
 
 #pragma mark - Action Methods

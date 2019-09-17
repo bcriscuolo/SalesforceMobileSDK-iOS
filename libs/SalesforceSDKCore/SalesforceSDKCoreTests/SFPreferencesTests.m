@@ -27,7 +27,9 @@
 #import "SFUserAccount.h"
 #import "SFUserAccountManager+Internal.h"
 #import "SFDirectoryManager.h"
-
+#import "SFUserAccount+Internal.h"
+#import "SFUserAccountIdentity+Internal.h"
+#import "SFOAuthCredentials+Internal.h"
 /** Class that tests the various scoped preferences
  */
 @interface SFPreferencesTests : XCTestCase
@@ -50,7 +52,7 @@
 
 - (void)testOrgLevelPreferences {
     SFOAuthCredentials *credentials = [[SFOAuthCredentials alloc] initWithIdentifier:@"happy-user" clientId:[SFUserAccountManager  sharedInstance].oauthClientId encrypted:YES];
-    SFUserAccount *user =[[SFUserAccount alloc] initWithCredentials:credentials];
+    SFUserAccount *user = [[SFUserAccount alloc] initWithCredentials:credentials];
     NSError *error = nil;
     BOOL success = [[SFUserAccountManager sharedInstance] saveAccountForUser:user error:&error];
     XCTAssertNil(error, @"Should be able to create user account");
@@ -58,9 +60,8 @@
     user.credentials.identityUrl = [NSURL URLWithString:@"https://login.salesforce.com/id/00D000000000062EA0/005R0000000Dsl0"];
     success = [[SFUserAccountManager sharedInstance] saveAccountForUser:user error:&error];
     XCTAssertNil(error, @"Should be able to update user account");
-    
-    [SFUserAccountManager sharedInstance].currentUser = user;
-
+    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:user];
+ 
     SFPreferences *prefs = [SFPreferences currentOrgLevelPreferences];
     XCTAssertNotNil(prefs, @"Preferences must exist");
     
@@ -84,8 +85,7 @@
     NSError *error = nil;
     [[SFUserAccountManager sharedInstance] saveAccountForUser:user error:&error];
     XCTAssertNil(error, @"Should be able to create user account");
- 
-    [SFUserAccountManager sharedInstance].currentUser = user;
+    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:user];
     
     SFPreferences *prefs = [SFPreferences currentUserLevelPreferences];
     XCTAssertNotNil(prefs, @"Preferences must exist");
@@ -110,7 +110,7 @@
     NSError *error = nil;
     [[SFUserAccountManager sharedInstance] saveAccountForUser:user error:&error];
     XCTAssertNil(error, @"Should be able to create user account");
-    [SFUserAccountManager sharedInstance].currentUser = user;
+    [[SFUserAccountManager sharedInstance] setCurrentUserInternal:user];
     
     SFPreferences *prefs = [SFPreferences currentCommunityLevelPreferences];
     XCTAssertNotNil(prefs, @"Preferences must exist");

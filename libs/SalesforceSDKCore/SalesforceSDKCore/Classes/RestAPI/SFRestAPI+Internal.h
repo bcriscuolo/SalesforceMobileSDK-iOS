@@ -36,9 +36,13 @@
 /**
  * Active requests property.
  */
-@property (nonatomic, readonly, strong) SFSDKSafeMutableSet *activeRequests;
+@property (nonatomic, readonly, strong, nonnull) SFSDKSafeMutableSet *activeRequests;
 
-- (void)removeActiveRequestObject:(SFRestRequest *)request;
+@property (nonatomic, assign) BOOL requiresAuthentication;
+
+@property (nullable, nonatomic, strong) id<SFRestDelegate>instrDelegateInternal;
+
+- (void)removeActiveRequestObject:(nonnull SFRestRequest *)request;
 
 /**
  Force a request to timeout: for testing only!
@@ -46,7 +50,13 @@
  @param req The request to force a timeout on, or nil to grab any active request and force it to timeout
  @return YES if we were able to find and timeout the request, NO if the request could not be found
  */
-- (BOOL)forceTimeoutRequest:(SFRestRequest*)req;
+- (BOOL)forceTimeoutRequest:(nonnull SFRestRequest *)req;
+
+- (void)send:(nonnull SFRestRequest *)request delegate:(nullable id<SFRestDelegate>)delegate shouldRetry:(BOOL)shouldRetry;
+
+- (nonnull NSString *)computeAPIVersion:(nullable NSString *)apiVersion;
+
++ (void)removeSharedInstanceWithUser:(nonnull SFUserAccount *)user;
 
 @end
 

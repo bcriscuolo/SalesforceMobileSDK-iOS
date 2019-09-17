@@ -25,12 +25,13 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 #import "SFUserAccountConstants.h"
+#import "SFIdentityData.h"
+#import "SalesforceSDKConstants.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 @class SFCommunityData;
 @class SFUserAccountIdentity;
-@class SFIdentityData;
 @class SFOAuthCredentials;
 
 /**
@@ -84,24 +85,23 @@ NS_SWIFT_NAME(UserAccount)
 
 /** The user's email
  */
-@property (nonatomic, copy, nullable) NSString *email;
+@property (nonatomic, copy, nullable) NSString *email SFSDK_DEPRECATED(7.1, 8.0, "Use SFUserAccount.idData properties instead");
 
 /** The user's organization name
  */
-@property (nonatomic, copy) NSString *organizationName;
+@property (nonatomic, copy) NSString *organizationName SFSDK_DEPRECATED(7.1, 8.0, "Will be removed");
 
 /** The user's full name
  */
-@property (nonatomic, copy) NSString *fullName;
+@property (nonatomic, copy) NSString *fullName SFSDK_DEPRECATED(7.1, 8.0, "Use SFUserAccount.idData properties instead");
 
 /** The user's name
  */
-@property (nonatomic, copy) NSString *userName;
+@property (nonatomic, copy) NSString *userName SFSDK_DEPRECATED(7.1, 8.0, "Use SFUserAccount.idData properties instead");
 
 /** The user's photo. Usually store a thumbnail of the user.
- Note: the consumer of this class must set the photo at least once,
- because this class doesn't fetch it from the server but
- only stores it locally on the disk.
+ Note: setting the photo is asynchronous. Use the method
+ below to get a callback when the photo is set.
  */
 @property (nonatomic, strong, nullable) UIImage *photo;
 
@@ -111,11 +111,11 @@ NS_SWIFT_NAME(UserAccount)
 
 /** The current community id the user is logged in
  */
-@property (nonatomic, copy, nullable) NSString *communityId;
+@property (nonatomic, copy, nullable) NSString *communityId SFSDK_DEPRECATED(7.3, 8.0, "Use communityId on SFOAuthCredentials instead.");
 
 /** The list of communities (as SFCommunityData item)
  */
-@property (nonatomic, copy, nullable) NSArray<SFCommunityData *> *communities;
+@property (nonatomic, copy, nullable) NSArray<SFCommunityData *> *communities SFSDK_DEPRECATED(7.1, 8.0, "Save these types of properties in your app.");
 
 /** Returns YES if the user has an access token and, presumably,
  a valid session.
@@ -149,7 +149,7 @@ NS_SWIFT_NAME(UserAccount)
  @param communityId The ID of the community
  @return The dictionary for the given community
  */
-- (nullable SFCommunityData*)communityWithId:(NSString*)communityId;
+- (nullable SFCommunityData*)communityWithId:(NSString*)communityId SFSDK_DEPRECATED(7.1, 8.0, "Store SFCommunityData in your app.");
 
 /** Set object in customData dictionary
  
@@ -169,6 +169,12 @@ NS_SWIFT_NAME(UserAccount)
  @return The object for a particular key
  */
 - (nullable id)customDataObjectForKey:(id)key;
+
+/** Sets the user's photo.
+ @param photo The user photo, usually the thumbnail of the user.
+ @param completion Optional callback block invoked when the photo has been set. If not set, an error is returned.
+ */
+- (void)setPhoto:(UIImage*_Nullable)photo completion:(void (^ __nullable)(NSError* _Nullable))completion;
 
 /** Function that returns a key that uniquely identifies this user account for the
  given scope. Note that if you use SFUserAccountScopeGlobal,
@@ -190,7 +196,12 @@ NSString *_Nullable SFKeyForUserAndScope(SFUserAccount * _Nullable user, SFUserA
  @param scope The scope
  @return a key identifying this user account for the specified scope
  */
-NSString *_Nullable SFKeyForUserIdAndScope(NSString *userId,NSString *orgId, NSString *_Nullable communityId, SFUserAccountScope scope);
+NSString *_Nullable SFKeyForUserIdAndScope(NSString *_Nullable userId,NSString *_Nullable orgId, NSString *_Nullable communityId, SFUserAccountScope scope);
+
+/** Function that returns a key for scope SFUserAccountScopeGlobal,
+  @return a key identifying this scope for the specified scope
+ */
+NSString *SFKeyForGlobalScope(void);
 
 @end
 

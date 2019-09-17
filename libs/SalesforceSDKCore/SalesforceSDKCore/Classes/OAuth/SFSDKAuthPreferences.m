@@ -27,28 +27,27 @@
  WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #import "SFSDKAuthPreferences.h"
 #import "SFManagedPreferences.h"
+#import "SFSDKLoginHostStorage.h"
+#import "SFSDKLoginHost.h"
 #import <SalesforceSDKCommon/NSUserDefaults+SFAdditions.h>
 
-static NSString * const  kSFLoginHostChangedNotification = @"kSFLoginHostChanged";
-static NSString * const  kSFLoginHostChangedNotificationOriginalHostKey = @"originalLoginHost";
-static NSString * const  kSFLoginHostChangedNotificationUpdatedHostKey = @"updatedLoginHost";
-
+static NSString * const kSFLoginHostChangedNotification = @"kSFLoginHostChanged";
+static NSString * const kSFLoginHostChangedNotificationOriginalHostKey = @"originalLoginHost";
+static NSString * const kSFLoginHostChangedNotificationUpdatedHostKey = @"updatedLoginHost";
 static NSString * const kDeprecatedLoginHostPrefKey = @"login_host_pref";
-
-static NSString * const  kSFUserAccountOAuthLoginHostDefault = @"login.salesforce.com"; // last resort
-static NSString * const  kSFUserAccountOAuthLoginHost = @"SFDCOAuthLoginHost";
+static NSString * const kSFUserAccountOAuthLoginHostDefault = @"login.salesforce.com"; // last resort
+static NSString * const kSFUserAccountOAuthLoginHost = @"SFDCOAuthLoginHost";
 
 // The key for storing the persisted OAuth scopes.
-static NSString * const  kOAuthScopesKey = @"oauth_scopes";
+static NSString * const kOAuthScopesKey = @"oauth_scopes";
 
 // The key for storing the persisted OAuth client ID.
-static NSString * const  kOAuthClientIdKey = @"oauth_client_id";
+static NSString * const kOAuthClientIdKey = @"oauth_client_id";
 
 // The key for storing the persisted OAuth redirect URI.
-static NSString * const  kOAuthRedirectUriKey = @"oauth_redirect_uri";
+static NSString * const kOAuthRedirectUriKey = @"oauth_redirect_uri";
 
 // The key for storing the persisted IDP app identifier
 NSString * const kSFIDPKey = @"SFDCIdp";
@@ -59,24 +58,26 @@ NSString * const kSFIDPProviderKey = @"SFIDPProvider";
 // The key for storing the persisted OAuth scopes.
 NSString * const kOAuthAppName = @"oauth_app_name";
 
-
 @implementation SFSDKAuthPreferences
 
-- (void)setLoginHost:(NSString*)host {
+- (void)setLoginHost:(NSString *)host {
     NSString *oldLoginHost = [self loginHost];
-    
     if (nil == host) {
         [[NSUserDefaults msdkUserDefaults] removeObjectForKey:kSFUserAccountOAuthLoginHost];
     } else {
+
+        // Persists the login host if it doesn't exist already.
+        if ([[SFSDKLoginHostStorage sharedInstance] loginHostForHostAddress:host] == nil) {
+            SFSDKLoginHost *loginHost = [SFSDKLoginHost hostWithName:host host:host deletable:YES];
+            [[SFSDKLoginHostStorage sharedInstance] addLoginHost:loginHost];
+        }
         [[NSUserDefaults msdkUserDefaults] setObject:host forKey:kSFUserAccountOAuthLoginHost];
     }
-    
     [[NSUserDefaults msdkUserDefaults] synchronize];
-    
+
     // Only post the login host change notification if the host actually changed.
     if ((oldLoginHost || host) && ![host isEqualToString:oldLoginHost]) {
-        NSDictionary *userInfoDict = @{ kSFLoginHostChangedNotificationOriginalHostKey: (oldLoginHost ?: [NSNull null]),
-                                        kSFLoginHostChangedNotificationUpdatedHostKey: (host ?: [NSNull null]) };
+        NSDictionary *userInfoDict = @{ kSFLoginHostChangedNotificationOriginalHostKey: (oldLoginHost ?: [NSNull null]), kSFLoginHostChangedNotificationUpdatedHostKey: (host ?: [NSNull null]) };
         NSNotification *loginHostUpdateNotification = [NSNotification notificationWithName:kSFLoginHostChangedNotification object:self userInfo:userInfoDict];
         [[NSNotificationCenter defaultCenter] postNotification:loginHostUpdateNotification];
     }
@@ -84,7 +85,7 @@ NSString * const kOAuthAppName = @"oauth_app_name";
 
 - (NSString *)loginHost {
     NSUserDefaults *defaults = [NSUserDefaults msdkUserDefaults];
-    
+
     // First let's import any previously stored settings, if available.
     NSString *host = [defaults stringForKey:kDeprecatedLoginHostPrefKey];
     if (host) {
@@ -93,13 +94,13 @@ NSString * const kOAuthAppName = @"oauth_app_name";
         [defaults synchronize];
         return host;
     }
-    
-    // Fetch from the standard defaults or bundle.
+
+    // Fetch from the standard defaults or bundle and ensues that login host still exists.
     NSString *loginHost = [defaults stringForKey:kSFUserAccountOAuthLoginHost];
-    if ([loginHost length] > 0) {
+    if (loginHost.length > 0 && [[SFSDKLoginHostStorage sharedInstance] loginHostForHostAddress:loginHost] != nil) {
         return loginHost;
     }
-    
+
     // Login host not initialized. Set it up.
     NSString *managedLoginHost = ([SFManagedPreferences sharedPreferences].loginHosts)[0];
     if (managedLoginHost.length > 0) {
@@ -141,9 +142,13 @@ NSString * const kOAuthAppName = @"oauth_app_name";
 
 - (NSString *)oauthCompletionUrl
 {
-    NSUserDefaults *defs = [NSUserDefaults msdkUserDefaults];
-    NSString *redirectUri = [defs objectForKey:kOAuthRedirectUriKey];
-    return redirectUri;
+    if ([SFManagedPreferences sharedPreferences].connectedAppCallbackUri.length > 0 ) {
+        return [SFManagedPreferences sharedPreferences].connectedAppCallbackUri;
+    } else {
+        NSUserDefaults *defs = [NSUserDefaults msdkUserDefaults];
+        NSString *redirectUri = [defs objectForKey:kOAuthRedirectUriKey];
+        return redirectUri;
+    }
 }
 
 - (void)setOauthCompletionUrl:(NSString *)newRedirectUri
@@ -155,9 +160,13 @@ NSString * const kOAuthAppName = @"oauth_app_name";
 
 - (NSString *)oauthClientId
 {
-    NSUserDefaults *defs = [NSUserDefaults msdkUserDefaults];
-    NSString *clientId = [defs objectForKey:kOAuthClientIdKey];
-    return clientId;
+    if ([SFManagedPreferences sharedPreferences].connectedAppId.length > 0) {
+        return [SFManagedPreferences sharedPreferences].connectedAppId;
+    } else {
+        NSUserDefaults *defs = [NSUserDefaults msdkUserDefaults];
+        NSString *clientId = [defs objectForKey:kOAuthClientIdKey];
+        return clientId;
+    }
 }
 
 - (void)setOauthClientId:(NSString *)newClientId
@@ -169,8 +178,12 @@ NSString * const kOAuthAppName = @"oauth_app_name";
 
 - (NSString *)idpAppURIScheme
 {
-    NSUserDefaults *defs = [NSUserDefaults msdkUserDefaults];
-    return [defs stringForKey:kSFIDPKey];
+    if ([SFManagedPreferences sharedPreferences].idpAppURLScheme.length > 0) {
+        return [SFManagedPreferences sharedPreferences].idpAppURLScheme;
+    } else {
+        NSUserDefaults *defs = [NSUserDefaults msdkUserDefaults];
+        return [defs stringForKey:kSFIDPKey];
+    }
 }
 
 - (void)setIdpAppURIScheme:(NSString *)appIdentifier
@@ -178,6 +191,10 @@ NSString * const kOAuthAppName = @"oauth_app_name";
     NSUserDefaults *defs = [NSUserDefaults msdkUserDefaults];
     [defs setObject:appIdentifier forKey:kSFIDPKey];
     [defs synchronize];
+}
+
+- (BOOL)requireBrowserAuthentication {
+    return [SFManagedPreferences sharedPreferences].requireCertificateAuthentication || _requireBrowserAuthentication;
 }
 
 - (BOOL)idpEnabled
@@ -201,7 +218,17 @@ NSString * const kOAuthAppName = @"oauth_app_name";
 - (NSString *)appDisplayName
 {
     NSUserDefaults *defs = [NSUserDefaults msdkUserDefaults];
-    return [defs stringForKey:kOAuthAppName];
+    NSString *appName = [defs stringForKey:kOAuthAppName];
+    if (appName) {
+        return appName;
+    } else {
+        NSString *bundleDisplayName = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleDisplayName"];
+        if (bundleDisplayName) {
+            return bundleDisplayName;
+        } else {
+            return [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleName"];
+        }
+    }
 }
 
 - (void)setAppDisplayName:(NSString *)appDisplayName
@@ -210,4 +237,5 @@ NSString * const kOAuthAppName = @"oauth_app_name";
     [defs setObject:appDisplayName forKey:kOAuthAppName];
     [defs synchronize];
 }
+
 @end
