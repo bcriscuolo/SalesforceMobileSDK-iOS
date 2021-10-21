@@ -29,12 +29,13 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  Mode constants indicating whether to create/verify an passcode or use biometric.
  */
+SFSDK_DEPRECATED(9.2, 10.0, "Will be removed in 10.0.")
 typedef NS_ENUM(NSUInteger, SFAppLockControllerMode) {
     SFAppLockControllerModeCreatePasscode,
     SFAppLockControllerModeVerifyPasscode,
     SFAppLockControllerModeChangePasscode,
     SFAppLockControllerModeEnableBiometric,
     SFAppLockControllerModeVerifyBiometric
-} NS_SWIFT_NAME(AppLockViewController.AppLockControllerMode);
+} NS_SWIFT_NAME(AppLockControllerMode);
 
 NS_ASSUME_NONNULL_END

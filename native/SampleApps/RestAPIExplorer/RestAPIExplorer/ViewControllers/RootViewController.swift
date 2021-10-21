@@ -538,10 +538,8 @@ class RootViewController: UIViewController {
     
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
-        if #available(iOS 13.0, *) {
-            if traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
-                self.updateBorderColor()
-            }
+        if traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
+            self.updateBorderColor()
         }
     }
     
@@ -855,12 +853,6 @@ extension RootViewController: ActionTableViewDelegate {
             userInfoString += "\nEmail: " + idData.email
             self.showAlert("User Info", message: userInfoString)
             return
-        case .enableBiometric:
-            // Uncomment this code to find the current state of biometric unlock
-            //UserAccountManager.shared.biometricUnlockState()
-            
-            UserAccountManager.shared.presentBiometricEnrollment(nil)
-            return
         case .logout:
             self.presentedViewController?.dismiss(animated: true, completion: nil)
             self.createLogoutActionSheet()
@@ -875,22 +867,13 @@ extension RootViewController: ActionTableViewDelegate {
             self.exportTestingCredentials()
             return
         case .overrideStyleLight:
-            // TODO: Remove this check in Mobile SDK 9.0
-            if #available(iOS 13, *) {
-                SFSDKWindowManager.shared().userInterfaceStyle = .light
-            }
+            SFSDKWindowManager.shared().userInterfaceStyle = .light
             return
         case .overrideStyleDark:
-            // TODO: Remove this check in Mobile SDK 9.0
-            if #available(iOS 13, *) {
-                SFSDKWindowManager.shared().userInterfaceStyle = .dark
-            }
+            SFSDKWindowManager.shared().userInterfaceStyle = .dark
             return
         case .overrideStyleUnspecified:
-            // TODO: Remove this check in Mobile SDK 9.0
-            if #available(iOS 13, *) {
-                SFSDKWindowManager.shared().userInterfaceStyle = .unspecified
-            }
+            SFSDKWindowManager.shared().userInterfaceStyle = .unspecified
             return
         }
         

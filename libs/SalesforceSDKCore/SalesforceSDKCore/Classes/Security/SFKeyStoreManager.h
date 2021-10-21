@@ -23,14 +23,16 @@
  */
 
 #import <Foundation/Foundation.h>
-#import "SFEncryptionKey.h"
-#import "SFKeyStoreKey.h"
+#import <SalesforceSDKCore/SFEncryptionKey.h>
+#import <SalesforceSDKCore/SFKeyStoreKey.h>
+#import <SalesforceSDKCore/SalesforceSDKConstants.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
 /**
  Singleton class to manage operations on the keystore.
  */
+SFSDK_DEPRECATED(9.2, 11.0, "Will be removed")
 @interface SFKeyStoreManager : NSObject
 
 /**
@@ -44,7 +46,7 @@ NS_ASSUME_NONNULL_BEGIN
  @param create Indicates whether a new key should be created if one does not exist.
  @returns Encryption key or `nil`, depending on the `autoCreate` value.
  */
-- (SFEncryptionKey *)retrieveKeyWithLabel:(NSString *)keyLabel autoCreate:(BOOL)create;
+- (nullable SFEncryptionKey *)retrieveKeyWithLabel:(NSString *)keyLabel autoCreate:(BOOL)create;
 
 /**
  Stores a key with the given label in the keystore encrypted by the store's key.

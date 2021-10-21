@@ -22,12 +22,13 @@
  WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#import "SFOAuthCredentials.h"
+#import <SalesforceSDKCore/SFOAuthCredentials.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
 @class SFEncryptionKey;
 
+SFSDK_DEPRECATED(9.2, 10.0, "Will be internal only")
 @interface SFOAuthKeychainCredentials : SFOAuthCredentials
 
 - (NSData *)keyMacForService:(NSString *)service;

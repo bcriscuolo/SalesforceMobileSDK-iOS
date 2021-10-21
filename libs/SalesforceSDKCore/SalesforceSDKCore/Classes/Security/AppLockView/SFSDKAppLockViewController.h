@@ -26,13 +26,13 @@
  */
 
 #import <UIKit/UIKit.h>
-#import "SFSDKNavigationController.h"
-#import "SFAppLockViewControllerTypes.h"
-#import "SFSDKAppLockViewConfig.h"
+#import <SalesforceSDKCore/SFSDKNavigationController.h>
+#import <SalesforceSDKCore/SFAppLockViewControllerTypes.h>
+#import <SalesforceSDKCore/SFSDKAppLockViewConfig.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
-NS_SWIFT_NAME(AppLockViewController) SFSDK_DEPRECATED(8.3, 9.0, "Will be internal.")
+SFSDK_DEPRECATED(9.2, 10.0, "Will be removed in 10.0.")
 @interface SFSDKAppLockViewController : SFSDKNavigationController
 
 - (instancetype)initWithMode:(SFAppLockControllerMode)mode andViewConfig:(SFSDKAppLockViewConfig *)config;

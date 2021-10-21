@@ -41,59 +41,37 @@
 
 @end
 
+@interface SFSDKEncryptedURLCache (Testing)
+
++ (NSString*) urlWithoutSubdomain:(NSURL*)url;
+
+@end
+
 @interface SFSDKUrlCacheTests : XCTestCase
 
 @end
 
 @implementation SFSDKUrlCacheTests
 
-// TODO: Remove in 9.0
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-- (void)testDeprecatedEncryptionFlag {
-
-    // Enabled by default
-    [SalesforceSDKManager sharedManager];
-    XCTAssertTrue([NSURLCache.sharedURLCache isMemberOfClass:[SFSDKEncryptedURLCache class]]);
-    NSString *cachePath = [[SFDirectoryManager sharedManager] globalDirectoryOfType:NSCachesDirectory components:@[@"salesforce.mobilesdk.URLCache"]];
-    XCTAssertNotNil(cachePath);
-    XCTAssertTrue([SalesforceSDKManager sharedManager].encryptURLCache);
-
-    // Disable
-    [SalesforceSDKManager sharedManager].encryptURLCache = NO;
-    XCTAssertTrue([NSURLCache.sharedURLCache isMemberOfClass:[NSURLCache class]]);
-    XCTAssertFalse([SalesforceSDKManager sharedManager].encryptURLCache);
-
-    // Enable again
-    [SalesforceSDKManager sharedManager].encryptURLCache = YES;
-    XCTAssertTrue([NSURLCache.sharedURLCache isMemberOfClass:[SFSDKEncryptedURLCache class]]);
-    XCTAssertTrue([SalesforceSDKManager sharedManager].encryptURLCache);
-}
-
 - (void)testSettingCacheTypes {
     // Encrypted enabled by default
     [SalesforceSDKManager sharedManager];
     XCTAssertTrue([NSURLCache.sharedURLCache isMemberOfClass:[SFSDKEncryptedURLCache class]]);
-    XCTAssertTrue([SalesforceSDKManager sharedManager].encryptURLCache);
     NSString *cachePath = [[SFDirectoryManager sharedManager] globalDirectoryOfType:NSCachesDirectory components:@[@"salesforce.mobilesdk.URLCache"]];
     XCTAssertNotNil(cachePath);
 
     // Set back to vanilla URL cache
     [SalesforceSDKManager sharedManager].URLCacheType = kSFURLCacheTypeStandard;
     XCTAssertTrue([NSURLCache.sharedURLCache isMemberOfClass:[NSURLCache class]]);
-    XCTAssertFalse([SalesforceSDKManager sharedManager].encryptURLCache);
     
     // Set to null cache
     [SalesforceSDKManager sharedManager].URLCacheType = kSFURLCacheTypeNull;
     XCTAssertTrue([NSURLCache.sharedURLCache isMemberOfClass:[SFSDKNullURLCache class]]);
-    XCTAssertFalse([SalesforceSDKManager sharedManager].encryptURLCache);
     
     // Enable encrypted again
     [SalesforceSDKManager sharedManager].URLCacheType = kSFURLCacheTypeEncrypted;
     XCTAssertTrue([NSURLCache.sharedURLCache isMemberOfClass:[SFSDKEncryptedURLCache class]]);
-    XCTAssertTrue([SalesforceSDKManager sharedManager].encryptURLCache);
 }
-#pragma clang diagnostic pop
 
 - (void)testNilURL {
     // NSURLCache ignores requests with bad/nil URLs, make sure we don't crash
@@ -167,6 +145,23 @@
     } @finally {
         method_setImplementation(networkForRequest, networkForRequestImplementation);
     }
+}
+
+- (void)testUrlWithoutSubdomain {
+    // Weird host
+    XCTAssertTrue([@"https://salesforce" isEqualToString:[SFSDKEncryptedURLCache urlWithoutSubdomain:[NSURL URLWithString:@"https://salesforce"]]]);
+    XCTAssertTrue([@"https://salesforce/abc" isEqualToString:[SFSDKEncryptedURLCache urlWithoutSubdomain:[NSURL URLWithString:@"https://salesforce/abc"]]]);
+    XCTAssertTrue([@"https://salesforce/abc?d=e" isEqualToString:[SFSDKEncryptedURLCache urlWithoutSubdomain:[NSURL URLWithString:@"https://salesforce/abc?d=e"]]]);
+
+    // Path and host with and without subdomains
+    XCTAssertTrue([@"https://salesforce.com/abc" isEqualToString:[SFSDKEncryptedURLCache urlWithoutSubdomain:[NSURL URLWithString:@"https://salesforce.com/abc"]]]);
+    XCTAssertTrue([@"https://salesforce.com/abc" isEqualToString:[SFSDKEncryptedURLCache urlWithoutSubdomain:[NSURL URLWithString:@"https://cs1.salesforce.com/abc"]]]);
+    XCTAssertTrue([@"https://salesforce.com/abc" isEqualToString:[SFSDKEncryptedURLCache urlWithoutSubdomain:[NSURL URLWithString:@"https://cs1.content.salesforce.com/abc"]]]);
+
+    // Path and query and host with and without subdomains
+    XCTAssertTrue([@"https://salesforce.com/abc?d=e" isEqualToString:[SFSDKEncryptedURLCache urlWithoutSubdomain:[NSURL URLWithString:@"https://salesforce.com/abc?d=e"]]]);
+    XCTAssertTrue([@"https://salesforce.com/abc?d=e" isEqualToString:[SFSDKEncryptedURLCache urlWithoutSubdomain:[NSURL URLWithString:@"https://cs1.salesforce.com/abc?d=e"]]]);
+    XCTAssertTrue([@"https://salesforce.com/abc?d=e" isEqualToString:[SFSDKEncryptedURLCache urlWithoutSubdomain:[NSURL URLWithString:@"https://cs1.content.salesforce.com/abc?d=e"]]]);
 }
 
 - (SFNetwork *)useCache_networkForRequest:(SFRestRequest *)request {

@@ -22,10 +22,12 @@
  WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#import "SFKeyStore.h"
+#import <SalesforceSDKCore/SFKeyStore.h>
+#import <SalesforceSDKCore/SalesforceSDKConstants.h>
 
 extern NSString * const kGeneratedKeyLabelSuffix;
 
+SFSDK_DEPRECATED(9.2, 10.0, "Will be internal only for upgrade steps")
 @interface SFGeneratedKeyStore : SFKeyStore
 
 @end

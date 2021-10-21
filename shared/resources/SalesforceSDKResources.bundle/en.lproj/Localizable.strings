@@ -48,13 +48,17 @@
 "biometricCancelButtonText" = "Not Now";
 "verifyPasscodeButtontext" = "Verify Passcode";
 "biometricFallbackActionLabel" = "Use Passcode";
-"biometricReason" = "Please authenticate to proceed.";
-"logoutButtonTitle" = "Log out";
 "accessibilityPasscodeFieldLabel" = "Passcode field";
 "accessibilityPasscodeLengthHint" = "Passcode is %d numbers long.";
 "accessibilityUnlockAnnouncement" = "Passcode confirmed.";
-"accessibilityLoggedOutAnnouncement" = "You are logged out.";
 
+// Screen Lock
+"biometricReason" = "Please authenticate to proceed.";
+"logoutButtonTitle" = "Log out";
+"retryButtonTitle" = "Retry Unlock";
+"setUpPasscodeMessage" = "%@ requires you to set up an iOS passcode to use the app.";
+"fallbackErrorMessage" = "An unexpected error occurred.";
+"accessibilityLoggedOutAnnouncement" = "You are logged out.";
 
 // OAuth flow
 "authAlertContinueButton"="Continue";
@@ -110,10 +114,11 @@
 "inspectorNoRowsReturned" = "No rows returned";
 "inspectorNoSoupsFound" = "No soups found";
 
-// SmartStore Inspector
+// Dev Menu
 "devInfoTitle" = "Mobile SDK Dev Support";
 "devInfoBackButtonTitle" = "Back";
 "devInfoOKKey" = "OK";
+"devInfoCancelKey" = "Cancel";
 
 //IDP User Selection Screen
 "idpSelectUserLabel" = "Select your account to log into";
@@ -127,4 +132,12 @@
 "idpLoginButtonTitle" = "IDP Log In";
 "idpLocalLoginButtonTitle" = "Local Log In";
 
-
+// Key-Value Store Inspector
+"Store" = "Store";
+"Enter Key" = "Enter Key";
+"Get Value" = "Get Value";
+"Key not found in selected store." = "Key not found in selected store.";
+"Copy value to clipboard" = "Copy value to clipboard";
+"Copy key to clipboard" = "Copy key to clipboard";
+"Key-Value Store Inspector" = "Key-Value Store Inspector";
+" (global)" = " (global)";
