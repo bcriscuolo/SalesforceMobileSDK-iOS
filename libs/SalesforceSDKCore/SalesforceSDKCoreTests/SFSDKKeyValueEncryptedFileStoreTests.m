@@ -4,7 +4,7 @@
 //
 //  Created by Brianna Birman on 6/23/20.
 //  Copyright (c) 2020-present, salesforce.com, inc. All rights reserved.
-// 
+//
 //  Redistribution and use of this software in source and binary forms, with or without modification,
 //  are permitted provided that the following conditions are met:
 //  * Redistributions of source code must retain the above copyright notice, this list of conditions
@@ -15,7 +15,7 @@
 //  * Neither the name of salesforce.com, inc. nor the names of its contributors may be used to
 //  endorse or promote products derived from this software without specific prior written
 //  permission of salesforce.com, inc.
-// 
+//
 //  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
 //  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
 //  FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
@@ -318,7 +318,7 @@
     NSError *error;
     NSArray *files = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:store.storeDirectory.path error:&error];
     XCTAssertNil(error, @"Error getting contents of path '%@': %@", store.storeDirectory.path, error);
-    XCTAssertEqual(files.count, 3, @"Unexpected number of files in store");
+    XCTAssertEqual(files.count, 4, @"Unexpected number of files in store");
     NSString *valuePath = [store.storeDirectory.path stringByAppendingPathComponent:files[0]];
     NSData *fileData = [NSData dataWithContentsOfFile:valuePath];
     NSData *valueData = [value dataUsingEncoding:NSUTF8StringEncoding];
@@ -345,7 +345,32 @@
     XCTAssertNil(store);
 }
 
+- (void) testBinaryStorage {
+    SFSDKKeyValueEncryptedFileStore *store = [self createStoreWithName:@"test_binary_storage"];
+
+    // Saving binary data to key value store
+    NSData* sampleData = [self randomData];
+    [store saveData:sampleData forKey:@"key"];
+
+    // Retrieving binary back from key value store
+    NSData* savedData = [store readDataWithKey:@"key"];
+
+    // Comparing bytes
+    XCTAssertTrue([savedData isEqualToData:sampleData], @"Retrieved data different from original data");
+}
+
 # pragma mark - Helpers
+- (NSData*) randomData {
+    int size           = 2048;
+    NSMutableData* data = [NSMutableData dataWithCapacity:size];
+    for( unsigned int i = 0 ; i < size/4 ; ++i )
+    {
+        u_int32_t randomBits = arc4random();
+        [data appendBytes:(void*)&randomBits length:4];
+    }
+    return data;
+}
+
 - (NSString *)globalPath {
     return [[SFDirectoryManager sharedManager] globalDirectoryOfType:NSDocumentDirectory components:@[@"key_value_stores"]];
 }
